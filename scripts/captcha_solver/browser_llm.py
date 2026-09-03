@@ -270,7 +270,14 @@ def _solve_slider(driver: WebDriver, selectors: dict) -> bool:
         else:
             return False
 
-        bg_uri = "data:image/png;base64," + base64.b64encode(bg_data).decode()
+        # 压缩为 JPEG 以省 token（视觉模型按像素计费；模型返回缺口 X 比例，与分辨率无关）
+        bg_img = Image.open(io.BytesIO(bg_data)).convert("RGB")
+        if max(bg_img.size) > 512:
+            _scale = 512 / float(max(bg_img.size))
+            bg_img = bg_img.resize((int(bg_img.width * _scale), int(bg_img.height * _scale)), Image.LANCZOS)
+        _bg_buf = io.BytesIO()
+        bg_img.save(_bg_buf, format="JPEG", quality=80)
+        bg_uri = "data:image/jpeg;base64," + base64.b64encode(_bg_buf.getvalue()).decode()
         img = Image.open(io.BytesIO(bg_data))
         bg_w, bg_h = img.size
         model = llm_model()
