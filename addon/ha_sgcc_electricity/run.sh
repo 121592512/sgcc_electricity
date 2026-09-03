@@ -47,6 +47,8 @@ export MQTT_TOPIC_PREFIX="$(json_get mqtt_topic_prefix homeassistant)"
 export MQTT_DEVICE_ID="$(json_get mqtt_device_id ha_sgcc_electricity)"
 export MQTT_DEVICE_NAME="$(json_get mqtt_device_name "国家电网电费数据")"
 export JOB_START_TIME="$(json_get job_start_time 07:00)"
+export DAILY_RUNS="$(json_get daily_runs 2)"
+export RUN_INTERVAL_DAYS="$(json_get run_interval_days 1)"
 export RUN_ON_STARTUP="$(json_get run_on_startup false)"
 export CAPTCHA_SOLVER="$(json_get captcha_solver local)"
 export LLM_API_KEY="$(json_get llm_api_key "")"
@@ -77,6 +79,7 @@ else
 fi
 
 echo "任务开始时间: ${JOB_START_TIME}"
+echo "每天运行次数: ${DAILY_RUNS}  同步间隔天数: ${RUN_INTERVAL_DAYS}"
 echo "启动立即抓取: ${RUN_ON_STARTUP}"
 echo "验证码识别: ${CAPTCHA_SOLVER}"
 echo "数据保留天数: ${DATA_RETENTION_DAYS}"
