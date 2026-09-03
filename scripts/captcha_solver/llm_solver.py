@@ -96,8 +96,9 @@ class ClickCaptchaSolver:
         main_raw = self._download(main_url)
         if not main_raw:
             return []
-        main_uri = "data:image/png;base64," + base64.b64encode(main_raw).decode("ascii")
-        logger.info("主图已下载 (%s bytes, %.1fs)", len(main_raw), time.monotonic() - t0)
+        main_img = Image.open(io.BytesIO(main_raw))
+        main_uri = self._compress(main_img)
+        logger.info("主图已下载并压缩 (%s bytes, %.1fs)", len(main_raw), time.monotonic() - t0)
 
         logger.info("步骤 4/4: 调用大模型识别坐标 (key=%s)...", _mask_api_key(self.api_key))
         coords = self._find_all_icons(icon_uris, main_uri, main_width, main_height)
@@ -136,6 +137,22 @@ class ClickCaptchaSolver:
             logger.error("下载验证码图片错误 (%s): %s", source, exc)
             return None
 
+    def _compress(self, img, max_dim: int = 512, quality: int = 80) -> str:
+        """PIL 图片转 RGB 后等比缩放到 max_dim 以内，以 JPEG 压缩为 base64 data URI。
+
+        视觉大模型按图片像素计费。原实现用 PNG 无损 + 参考图标 3x 放大，
+        单次调用 token 偏高。改 JPEG q80 并限制最大边长，可显著减少输入 token。
+        模型返回的是比例坐标(0~1)，与分辨率无关，不影响识别精度。
+        """
+        img = img.convert("RGB")
+        w, h = img.size
+        if max(w, h) > max_dim:
+            scale = max_dim / float(max(w, h))
+            img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=quality)
+        return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+
     def _split_strip(self, raw: bytes) -> List[str]:
         try:
             img = Image.open(io.BytesIO(raw))
@@ -148,12 +165,9 @@ class ClickCaptchaSolver:
                 left = i * part_w
                 right = (i + 1) * part_w if i < 2 else w
                 icon = img.crop((left, 0, right, h))
-                icon = icon.resize((icon.width * 3, icon.height * 3), Image.LANCZOS)
-                buf = io.BytesIO()
-                icon.save(buf, format="PNG")
-                uri = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+                uri = self._compress(icon)
                 uris.append(uri)
-                logger.info("参考图标 #%s: 放大后 %sx%s", i + 1, icon.width, icon.height)
+                logger.info("参考图标 #%s 已压缩", i + 1)
             return uris
         except Exception as exc:
             logger.error("拆分参考图标条失败: %s", exc)
