@@ -98,12 +98,23 @@ def main():
     parsed_time = datetime.strptime(JOB_START_TIME, "%H:%M") + timedelta(minutes=random_delay_minutes)
     logging.info(f"登录账号: {PHONE_NUMBER}，每天 {parsed_time.strftime('%H:%M')} 定时同步")
 
-    # 添加随机延迟
-    next_run_time = parsed_time + timedelta(hours=12)
+    # 每天运行次数：2=默认(设定时间 + 12h 各一次)，1=仅设定时间一次（省一半验证码调用）
+    daily_runs = int(os.getenv("DAILY_RUNS", "2").strip() or "2")
+    if daily_runs < 1:
+        daily_runs = 1
 
-    logging.info(f"定时任务已注册，每天 {parsed_time.strftime('%H:%M')} 和 {next_run_time.strftime('%H:%M')} 各执行一次")
-    schedule.every().day.at(parsed_time.strftime("%H:%M")).do(run_task, fetcher)
-    schedule.every().day.at(next_run_time.strftime("%H:%M")).do(run_task, fetcher)
+    # 运行间隔天数：1=默认每天，2=每两天一次，N=每 N 天一次
+    run_interval = int(os.getenv("RUN_INTERVAL_DAYS", "1").strip() or "1")
+    if run_interval < 1:
+        run_interval = 1
+
+    schedule.every(run_interval).days.at(parsed_time.strftime("%H:%M")).do(run_task, fetcher)
+    if daily_runs >= 2:
+        next_run_time = parsed_time + timedelta(hours=12)
+        logging.info(f"定时任务已注册，每 {run_interval} 天 {parsed_time.strftime('%H:%M')} 和 {next_run_time.strftime('%H:%M')} 各执行一次")
+        schedule.every(run_interval).days.at(next_run_time.strftime("%H:%M")).do(run_task, fetcher)
+    else:
+        logging.info(f"定时任务已注册（DAILY_RUNS=1, RUN_INTERVAL_DAYS={run_interval}），仅每 {run_interval} 天 {parsed_time.strftime('%H:%M')} 执行一次")
     
     # 每5分钟重发一次数据，防止HA重启后数据丢失
     if updator:
