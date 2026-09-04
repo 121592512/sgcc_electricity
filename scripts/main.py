@@ -108,6 +108,8 @@ def main():
     if run_interval < 1:
         run_interval = 1
 
+    logging.info(f"[DIAG] 调度参数读取: DAILY_RUNS={daily_runs!r}, RUN_INTERVAL_DAYS={run_interval!r} (env={os.getenv('DAILY_RUNS')!r}/{os.getenv('RUN_INTERVAL_DAYS')!r})")
+
     schedule.every(run_interval).days.at(parsed_time.strftime("%H:%M")).do(run_task, fetcher)
     if daily_runs >= 2:
         next_run_time = parsed_time + timedelta(hours=12)
