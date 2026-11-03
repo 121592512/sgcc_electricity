@@ -249,7 +249,7 @@ class MQTTSensorUpdator:
         base = BALANCE_SENSOR_NAME
         sensor_name = self._sensor_name(base, postfix)
         label = self._sensor_label(base)
-        last_reset = datetime.now().strftime("%Y-%m-%d, %H:%M:%S")
+        last_reset = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
         attributes = {}
         if enhanced_balance and enhanced_balance.get("amount_due") is not None:
@@ -270,7 +270,7 @@ class MQTTSensorUpdator:
         current_date = datetime.now()
         first_day_of_current_month = current_date.replace(day=1)
         last_day_of_previous_month = first_day_of_current_month - timedelta(days=1)
-        last_reset = last_day_of_previous_month.strftime("%Y-%m")
+        last_reset = last_day_of_previous_month.strftime("%Y-%m-%dT%H:%M:%S")
         unit = "kWh" if usage else "CNY"
         label = self._sensor_label(base)
 
@@ -288,9 +288,9 @@ class MQTTSensorUpdator:
         sensor_name = self._sensor_name(base, postfix)
         now = datetime.now()
         if now.month == 1:
-            last_reset = str(now.year - 1)
+            last_reset = f"{now.year - 1}-01-01T00:00:00"
         else:
-            last_reset = str(now.year)
+            last_reset = f"{now.year}-01-01T00:00:00"
         unit = "kWh" if usage else "CNY"
         label = self._sensor_label(base)
 
@@ -307,7 +307,7 @@ class MQTTSensorUpdator:
         base = PREPAY_BALANCE_SENSOR_NAME
         sensor_name = self._sensor_name(base, postfix)
         label = self._sensor_label(base)
-        last_reset = datetime.now().strftime("%Y-%m-%d, %H:%M:%S")
+        last_reset = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
         self._publish_sensor(
             sensor_name=sensor_name, label=label, state=sensor_state,
@@ -348,7 +348,7 @@ class MQTTSensorUpdator:
                 sensor_name=sensor_name, label=label, state=value,
                 unit="kWh", device_class="energy", state_class="measurement",
                 user_id=user_id, user_name=user_name, icon="mdi:lightning-bolt",
-                last_reset=target_month,
+                last_reset=f"{target_month}-01T00:00:00",
             )
             logging.info("%s 【%s】 已更新: %s kWh", label, sensor_name, value)
 
