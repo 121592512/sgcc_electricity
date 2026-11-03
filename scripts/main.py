@@ -43,7 +43,7 @@ def main():
         PASSWORD = os.getenv("PASSWORD")
         HASS_URL = os.getenv("HASS_URL")
         MQTT_HOST = os.getenv("MQTT_HOST", "").strip()
-        JOB_START_TIME = os.getenv("JOB_START_TIME", "09:30")
+        JOB_START_TIME = os.getenv("JOB_START_TIME", "09:30").strip('"').strip("'")
         RUN_ON_STARTUP = os.getenv("RUN_ON_STARTUP", "false").strip().strip('"').strip("'").lower() in ("true", "1", "yes")
         LOG_LEVEL = os.getenv("LOG_LEVEL","INFO")
         VERSION = os.getenv("VERSION", "unknown")
