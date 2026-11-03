@@ -243,7 +243,7 @@ class SensorUpdator:
             self._log_skip(base, postfix)
             return
 
-        last_reset = datetime.now().strftime("%Y-%m-%d, %H:%M:%S")
+        last_reset = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
         attributes = {
             "last_reset": last_reset,
             "unit_of_measurement": "CNY",
@@ -271,7 +271,7 @@ class SensorUpdator:
         current_date = datetime.now()
         first_day_of_current_month = current_date.replace(day=1)
         last_day_of_previous_month = first_day_of_current_month - timedelta(days=1)
-        last_reset = last_day_of_previous_month.strftime("%Y-%m")
+        last_reset = last_day_of_previous_month.strftime("%Y-%m-%dT%H:%M:%S")
 
         if not self._should_push(sensorName, sensorState, {"last_reset": last_reset}):
             self._log_skip(base, postfix)
@@ -299,9 +299,9 @@ class SensorUpdator:
         sensorName = self._sensor_name(base, postfix)
         if datetime.now().month == 1:
             last_year = datetime.now().year - 1
-            last_reset = datetime.now().replace(year=last_year).strftime("%Y")
+            last_reset = f"{last_year}-01-01T00:00:00"
         else:
-            last_reset = datetime.now().strftime("%Y")
+            last_reset = f"{datetime.now().year}-01-01T00:00:00"
 
         if not self._should_push(sensorName, sensorState, {"last_reset": last_reset}):
             self._log_skip(base, postfix)
@@ -326,7 +326,7 @@ class SensorUpdator:
     def _update_tou_sensors(self, user_id: str, postfix: str, tou_data: dict = None):
         """从数据库汇总当前自然月日用电，更新谷/平/峰/尖传感器。"""
         target_month = self._current_month_key()
-        last_reset = target_month
+        last_reset = f"{target_month}-01T00:00:00"
 
         summary = (tou_data or {}).get("month_tou_summary")
         if not summary:
@@ -437,7 +437,7 @@ class SensorUpdator:
         if not self._should_push(sensorName, sensorState):
             self._log_skip(base, postfix)
             return
-        last_reset = datetime.now().strftime("%Y-%m-%d, %H:%M:%S")
+        last_reset = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
         request_body = {
             "state": sensorState,
             "unique_id": sensorName,
