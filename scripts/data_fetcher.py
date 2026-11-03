@@ -696,7 +696,7 @@ class DataFetcher:
             logging.error(
                 f"浏览器异常退出: {e}，剩余重试次数 {self.RETRY_TIMES_LIMIT}")
             driver.quit()
-            return
+            raise
 
         logging.info(f"登录成功! 当前页面: {driver.current_url}")
         time.sleep(self._step_wait)
